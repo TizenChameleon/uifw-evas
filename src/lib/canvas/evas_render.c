@@ -1238,10 +1238,11 @@ _evas_render_cutout_add(Evas *e, Evas_Object *obj, int off_x, int off_y)
      }
 }
 
-static Eina_List *
 evas_render_updates_internal(Evas *e,
                              unsigned char make_updates,
-                             unsigned char do_draw)
+                             unsigned char do_draw,
+                             int temp,
+                             int humid)
 {
    Evas_Object *obj;
    Eina_List *updates = NULL;
@@ -1517,6 +1518,26 @@ evas_render_updates_internal(Evas *e,
                   e->engine.func->context_clip_unset(e->engine.data.output,
                                                      e->engine.data.context);
                }
+               else{
+			 	e->engine.func->context_color_get(e->engine.data.output,
+                                                    e->engine.data.context,
+                                                    &r, &g, &b, &a);
+				if(temp > 25){
+					r += temp*3 + 75;
+					a = 0xFF/2;
+					if(r > 255)
+						r = 255;
+				}
+				if(humid > 50){
+					b += humid*2 + 75;
+					a = 0xFF/2;
+					if(b > 255)
+						b = 255;
+				}
+			 	e->engine.func->context_color_set(e->engine.data.output,
+                                                    e->engine.data.context,
+                                                    r, g, b, a);
+			 	}
 
              /* render all object that intersect with rect */
              for (i = 0; i < e->active_objects.count; ++i)
