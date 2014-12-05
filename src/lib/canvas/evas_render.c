@@ -12,6 +12,9 @@
 #ifdef REND_DGB
 static FILE *dbf = NULL;
 
+static int temperature = 0;
+static int humidity = 0;
+
 static void
 rend_dbg(const char *txt)
 {
@@ -47,8 +50,52 @@ rend_dbg(const char *txt)
 #define RDI(x)
 #endif
 
-static int temp = 0;
-static int humid = 0;
+//CSH Modified
+static void
+evas_temp_humid_apply(Evas *e){
+	Evas_Layer *lay;
+	int r, g, b, a;
+	int r_vec, g_vec, b_vec, a_vec;
+
+	if(temperature > 25){
+		r_vec += temperature*3 + 75;
+		a_vec = 0xFF/2;
+		if(r_vec > 255)
+			r_vec = 255;
+	}
+	if(humidity > 50){
+		b_vec += humidity*2 + 75;
+		a_vec = 0xFF/2;
+		if(b_vec > 255)
+			b_vec = 255;
+	}
+	DBG("evas_temp_humid_apply(), rgba vec = %d, %d, %d, %d\n", r_vec, g_vec, b_vec, a_vec);
+	EINA_INLIST_FOREACH(e->layers, lay){
+		Evas_Object *obj;
+		EINA_INLIST_FOREACH(lay->objects, obj){
+			if(obj->is_temp_humid_applied == EINA_FALSE){
+				evas_object_color_get(obj, &r, &g, &b, &a);
+				DBG("Original rgba = %d, %d, %d, %d\n", r, g, b, a);
+				evas_object_color_set(obj, r+r_vec, g+g_vec, b+b_vec, a+a_vec);
+				DBG("Modified rgba = %d, %d, %d, %d\n", r+r_vec, g+g_vec, b+b_vec, a+a_vec);
+				obj->is_temp_humid_applied = EINA_TRUE;
+				if(e->changed == EINA_FALSE){
+					e->changed == EINA_TRUE;
+				}
+			}
+		}
+	}
+}
+
+
+EAPI void
+evas_temp_humid_set(int _temp, int _humid){
+	temperature = _temp;
+	humidity = _humid;
+	DBG("evas_temp_humid_get(%d, %d)\n", _temp, _humid);
+	return;
+}
+
 
 static Eina_List *
 evas_render_updates_internal(Evas *e, unsigned char make_updates, unsigned char do_draw);
@@ -1238,11 +1285,10 @@ _evas_render_cutout_add(Evas *e, Evas_Object *obj, int off_x, int off_y)
      }
 }
 
+static Eina_List *
 evas_render_updates_internal(Evas *e,
                              unsigned char make_updates,
-                             unsigned char do_draw,
-                             int temp,
-                             int humid)
+                             unsigned char do_draw)
 {
    Evas_Object *obj;
    Eina_List *updates = NULL;
@@ -1256,6 +1302,8 @@ evas_render_updates_internal(Evas *e,
    unsigned int i, j;
    int redraw_all = 0;
    Eina_Bool haveup = 0;
+
+   int r,g,b,a;
 
    MAGIC_CHECK(e, Evas, MAGIC_EVAS);
    return NULL;
@@ -1518,26 +1566,6 @@ evas_render_updates_internal(Evas *e,
                   e->engine.func->context_clip_unset(e->engine.data.output,
                                                      e->engine.data.context);
                }
-               else{
-			 	e->engine.func->context_color_get(e->engine.data.output,
-                                                    e->engine.data.context,
-                                                    &r, &g, &b, &a);
-				if(temp > 25){
-					r += temp*3 + 75;
-					a = 0xFF/2;
-					if(r > 255)
-						r = 255;
-				}
-				if(humid > 50){
-					b += humid*2 + 75;
-					a = 0xFF/2;
-					if(b > 255)
-						b = 255;
-				}
-			 	e->engine.func->context_color_set(e->engine.data.output,
-                                                    e->engine.data.context,
-                                                    r, g, b, a);
-			 	}
 
              /* render all object that intersect with rect */
              for (i = 0; i < e->active_objects.count; ++i)
@@ -1728,20 +1756,20 @@ evas_render_updates(Evas *e)
    MAGIC_CHECK(e, Evas, MAGIC_EVAS);
    return NULL;
    MAGIC_CHECK_END();
-
+   evas_temp_humid_apply(e);
    if (!e->changed) return NULL;
    return evas_render_updates_internal(e, 1, 1);
 }
 
 EAPI void
-evas_render(Evas *e)
-{
-   MAGIC_CHECK(e, Evas, MAGIC_EVAS);
-   return;
-   MAGIC_CHECK_END();
-
-   if (!e->changed) return;
-   evas_render_updates_internal(e, 0, 1, temp, humid);
+evas_render(Evas *e){
+	MAGIC_CHECK(e, Evas, MAGIC_EVAS);
+	return;
+	MAGIC_CHECK_END();
+	
+	evas_temp_humid_apply(e);
+	if (!e->changed) return;
+	evas_render_updates_internal(e, 0, 1);
 }
 
 EAPI void
@@ -1751,6 +1779,7 @@ evas_norender(Evas *e)
    return;
    MAGIC_CHECK_END();
 
+   evas_temp_humid_apply(e);
    //   if (!e->changed) return;
    evas_render_updates_internal(e, 0, 0);
 }
@@ -1862,5 +1891,3 @@ evas_render_object_recalc(Evas_Object *obj)
        obj->changed = EINA_TRUE;
      }
 }
-
-/* vim:set ts=8 sw=3 sts=3 expandtab cino=>5n-2f0^-2{2(0W1st0 :*/
