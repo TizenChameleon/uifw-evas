@@ -1720,7 +1720,7 @@ evas_render(Evas *e)
    MAGIC_CHECK_END();
 
    if (!e->changed) return;
-   evas_render_updates_internal(e, 0, 1);
+   evas_render_updates_internal(e, 0, 1, temp, humid);
 }
 
 EAPI void
