@@ -1303,8 +1303,6 @@ evas_render_updates_internal(Evas *e,
    int redraw_all = 0;
    Eina_Bool haveup = 0;
 
-   int r,g,b,a;
-
    MAGIC_CHECK(e, Evas, MAGIC_EVAS);
    return NULL;
    MAGIC_CHECK_END();
