@@ -47,6 +47,9 @@ rend_dbg(const char *txt)
 #define RDI(x)
 #endif
 
+static int temp = 0;
+static int humid = 0;
+
 static Eina_List *
 evas_render_updates_internal(Evas *e, unsigned char make_updates, unsigned char do_draw);
 
