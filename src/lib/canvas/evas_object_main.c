@@ -26,7 +26,8 @@ evas_object_new(Evas *e __UNUSED__)
    obj->cur.scale = 1.0;
    obj->prev.scale = 1.0;
    obj->is_frame = EINA_FALSE;
-
+   obj->is_temp_humid_applied = EINA_FALSE;
+   
    return obj;
 }
 
