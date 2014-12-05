@@ -1548,3 +1548,11 @@ evas_object_is_frame_object_get(Evas_Object *obj)
    MAGIC_CHECK_END();
    return obj->is_frame;
 }
+
+// CSH TODO
+EAPI void
+evas_object_temperature_layer_add(Evas* e){
+}
+
+EAPI void evas_object_temperature_layer_set(Evas* e, int temp){
+}
